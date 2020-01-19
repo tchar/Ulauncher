@@ -146,6 +146,7 @@ class UlauncherWindow(Gtk.Window, WindowHelper):
         self.preferences_dialog = None
 
     def on_focus_out_event(self, widget, event):
+        return
         # apparently Gtk doesn't provide a mechanism to tell if window is in focus
         # this is a simple workaround to avoid hiding window
         # when user hits Alt+key combination or changes input source, etc.
@@ -256,8 +257,9 @@ class UlauncherWindow(Gtk.Window, WindowHelper):
         # The topmost pixel of the window should be at 1/5 of the current screen's height
         # Window should be positioned in the center horizontally
         # Also, add offset x and y, in order to move window to the current screen
-        self.move(screen['width'] / 2 - window_width / 2 + screen['x'],
-                  screen['height'] / 5 + screen['y'])
+        # self.move(screen['width'] / 2 - window_width / 2 + screen['x'],
+        #           screen['height'] / 5 + screen['y'])
+        self.move(17, 180)
 
     def show_window(self):
         # works only when the following methods are called in that exact order
@@ -277,6 +279,7 @@ class UlauncherWindow(Gtk.Window, WindowHelper):
 
     def toggle_window(self, key=None):
         if self.is_visible():
+            return
             self.hide()
         else:
             self.show_window()
