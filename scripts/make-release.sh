@@ -19,8 +19,8 @@ make-release() {
 
     create_deb
     create_rpms
-    launchpad_upload
-    aur_update
+    # launchpad_upload
+    # aur_update
 }
 
 create_deb() {
@@ -36,7 +36,7 @@ create_deb() {
         -v $(pwd):/root/ulauncher \
         --name ulauncher-deb \
         $BUILD_IMAGE \
-        bash -c "$step1 && $step2 && $step3 && $step4 && $step5"
+        bash -c "$step1 && $step2 && $step3 && $step4"
     set +x
     docker cp ulauncher-deb:/tmp/ulauncher_$VERSION.tar.gz .
     docker cp ulauncher-deb:/tmp/ulauncher_${VERSION}_all.deb .
@@ -53,10 +53,10 @@ create_rpms() {
     h1 "Creating .rpm"
 
     set -ex
-    docker run -v $(pwd):/root/ulauncher --name ulauncher-rpm $FEDORA_BUILD_IMAGE \
-        bash -c "./ul build-rpm $VERSION fedora"
-    docker cp ulauncher-rpm:/tmp/ulauncher_${VERSION}_fedora.rpm .
-    docker rm ulauncher-rpm
+    # docker run -v $(pwd):/root/ulauncher --name ulauncher-rpm $FEDORA_BUILD_IMAGE \
+    #     bash -c "./ul build-rpm $VERSION fedora"
+    # docker cp ulauncher-rpm:/tmp/ulauncher_${VERSION}_fedora.rpm .
+    # docker rm ulauncher-rpm
 
     docker run -v $(pwd):/root/ulauncher --name ulauncher-rpm $FEDORA_33_BUILD_IMAGE \
         bash -c "./ul build-rpm $VERSION fedora fedora33"
