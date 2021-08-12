@@ -4,8 +4,6 @@ from typing import Optional
 import logging
 from shutil import rmtree
 from subprocess import Popen, PIPE
-import pkg_resources
-from pkg_resources import DistributionNotFound, VersionConflict
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +26,13 @@ class ExtensionDependenciesDownloader:
         return os.path.join(self.ext_path, 'requirements.txt')
 
     def needs_venv(self) -> bool:
-        """Checks requirements file and returns True if requirements are missing, False otherwise"""
+        """Returns True if requirements file is found, False otherwise"""
         requirements_file = self.requirements_file
         if not os.path.isfile(requirements_file):
             return False
 
         logger.debug('Requirements file found: %s', requirements_file)
-        with open(requirements_file) as f:
-            requirements = f.read()
-
-        try:
-            pkg_resources.require(requirements.split('\n'))
-        except (DistributionNotFound, VersionConflict) as e:
-            logger.debug('Missing requirements %s', e)
-            return True
-        return False
+        return True
 
     def create_venv(self) -> Optional[str]:
         """Creates venv and returns the venv path if venv is created, None otherwise"""
