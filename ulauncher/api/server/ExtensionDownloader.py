@@ -13,6 +13,7 @@ from ulauncher.utils.decorator.singleton import singleton
 from ulauncher.api.shared.errors import UlauncherAPIError, ErrorName
 from ulauncher.api.server.ExtensionDb import ExtensionDb, ExtensionRecord
 from ulauncher.api.server.GithubExtension import GithubExtension
+from ulauncher.api.server.ExtensionDependenciesDownloader import ExtensionDependenciesDownloader
 from ulauncher.api.server.ExtensionRunner import ExtensionRunner, ExtensionIsNotRunningError
 from ulauncher.api.server.extension_finder import find_extensions
 
@@ -53,7 +54,8 @@ class ExtensionDownloader:
         1. check if ext already exists
         2. get last commit info
         3. download & unzip
-        4. add it to the db
+        4. download dependencies if required
+        5. add it to the db
 
         :rtype: str
         :returns: Extension ID
@@ -78,13 +80,18 @@ class ExtensionDownloader:
         filename = download_zip(gh_ext.get_download_url(commit['sha']))
         unzip(filename, ext_path)
 
-        # 4. add to the db
+        # 4. download dependencies if required
+        deps_downloader = ExtensionDependenciesDownloader(ext_path)
+        deps_downloader.download()
+
+        # 5. add to the db
         self.ext_db.put(ext_id, {
             'id': ext_id,
             'url': url,
             'updated_at': datetime.now().isoformat(),
             'last_commit': commit['sha'],
-            'last_commit_time': commit['time'].isoformat()
+            'last_commit_time': commit['time'].isoformat(),
+            'executable': deps_downloader.executable
         })
         self.ext_db.commit()
 
@@ -136,9 +143,13 @@ class ExtensionDownloader:
         filename = download_zip(gh_ext.get_download_url(commit['last_commit']))
         unzip(filename, ext_path)
 
+        deps_downloader = ExtensionDependenciesDownloader(ext_path)
+        deps_downloader.download()
+
         ext['updated_at'] = datetime.now().isoformat()
         ext['last_commit'] = commit['last_commit']
         ext['last_commit_time'] = commit['last_commit_time']
+        ext['executable'] = deps_downloader.executable
         self.ext_db.put(ext_id, ext)
         self.ext_db.commit()
 

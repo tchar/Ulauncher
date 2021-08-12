@@ -11,7 +11,8 @@ ExtensionRecord = TypedDict('ExtensionRecord', {
     'url': str,
     'updated_at': str,
     'last_commit': str,
-    'last_commit_time': str
+    'last_commit_time': str,
+    'executable': str
 })
 
 

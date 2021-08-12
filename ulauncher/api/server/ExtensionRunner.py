@@ -14,6 +14,7 @@ from ulauncher.api.server.ExtensionManifest import ExtensionManifest
 from ulauncher.api.server.ExtensionServer import ExtensionServer
 from ulauncher.api.server.ProcessErrorExtractor import ProcessErrorExtractor
 from ulauncher.api.server.extension_finder import find_extensions
+from ulauncher.api.server.ExtensionDb import ExtensionDb
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +72,17 @@ class ExtensionRunner:
         manifest.validate()
         manifest.check_compatibility()
 
-        run_process = run_async(daemon=True)(self._run_process)
-        run_process(extension_id)
+        ext = ExtensionDb.get_instance().find(extension_id, {})
+        executable = ext.get('executable', sys.executable)
 
-    def _run_process(self, extension_id):
+        run_process = run_async(daemon=True)(self._run_process)
+        run_process(extension_id, executable)
+
+    def _run_process(self, extension_id, executable):
         """
         Blocking function
         """
-        cmd = [sys.executable, os.path.join(self.extensions_dir, extension_id, 'main.py')]
+        cmd = [executable, os.path.join(self.extensions_dir, extension_id, 'main.py')]
         env = os.environ.copy()
         env['ULAUNCHER_WS_API'] = self.extension_server.generate_ws_url(extension_id)
         env['PYTHONPATH'] = ':'.join(filter(bool, [ULAUNCHER_APP_DIR, os.getenv('PYTHONPATH')]))
