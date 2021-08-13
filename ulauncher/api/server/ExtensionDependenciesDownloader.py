@@ -1,4 +1,4 @@
-from typing import Callable, BinaryIO, Union
+from typing import Callable, BinaryIO
 from types import SimpleNamespace
 import os
 from shutil import rmtree
@@ -45,36 +45,14 @@ class ExtensionDependenciesDownloader(venv.EnvBuilder):
         """
         args = [context.env_exe, '-m', 'pip', 'install', '-r', self.requirements_file]
         proc = Popen(args, stdout=PIPE, stderr=PIPE)
-        t1 = run_async(self.reader)(proc.stdout, logger.info)
-        t2 = run_async(self.reader)(proc.stderr, logger.warning)
+        t1 = self.reader(proc.stdout, logger.info)
+        t2 = self.reader(proc.stderr, logger.warning)
         proc.wait()
         t1.join()
         t2.join()
         if proc.returncode:
             raise CalledProcessError(proc.returncode, args)
-
-    def create(self, env_dir: Union[str, bytes, os.PathLike]) -> None:
-        """
-        Creates the venv
-        """
-        try:
-            context = self.ensure_directories(env_dir)
-            # See issue 24875 from venv. We need system_site_packages to be False
-            # until after pip is installed.
-            self.system_site_packages = False
-            self.create_configuration(context)
-            self.setup_python(context)
-            self._setup_pip(context)
-            self.setup_scripts(context)
-            self.post_setup(context)
-            self.system_site_packages = True
-            self.create_configuration(context)
-            self.executable = context.env_exe
-        # This catch is also used for self._setup_pip() in case ensurepip is missing
-        except CalledProcessError as e:
-            if os.path.isdir(env_dir):
-                rmtree(env_dir)
-            logger.error(e)
+        self.executable = context.env_exe
 
     def download(self) -> None:
         """
@@ -85,4 +63,11 @@ class ExtensionDependenciesDownloader(venv.EnvBuilder):
         env_dir = os.path.join(self.ext_path, ext_basename + '_venv')
         if os.path.exists(env_dir) or not os.path.exists(self.requirements_file):
             return
-        self.create(env_dir)
+        try:
+            self.create(env_dir)
+        # This catch is also used for self._setup_pip() in case ensurepip is missing
+        except CalledProcessError as e:
+            self.executable = sys.executable
+            if os.path.isdir(env_dir):
+                rmtree(env_dir)
+            logger.error(e)
